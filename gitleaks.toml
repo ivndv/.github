@@ -39,6 +39,22 @@ paths = [
   '''(^|/)README\.md$''',
 ]
 
+[[allowlists]]
+description = "Beacon de Cloudflare Web Analytics (token publico por diseno)"
+ruleIDs = ["generic-api-key"]
+regexTarget = "match"
+regexes = [
+  '''data-cf-beacon''',
+]
+
+[[allowlists]]
+description = "Umami (website-id publico por diseno)"
+ruleIDs = ["generic-api-key"]
+regexTarget = "match"
+regexes = [
+  '''data-website-id''',
+]
+
 # ---------------------------------------------------------------------------
 # Regla extra: tokens de API de Cloudflare
 # Formato: 40 caracteres [A-Za-z0-9_-]. No lo cubre la config por defecto.
