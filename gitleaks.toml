@@ -42,7 +42,7 @@ paths = [
 [[allowlists]]
 description = "Beacon de Cloudflare Web Analytics (token publico por diseno)"
 ruleIDs = ["generic-api-key"]
-regexTarget = "match"
+regexTarget = "line"
 regexes = [
   '''data-cf-beacon''',
 ]
@@ -50,7 +50,7 @@ regexes = [
 [[allowlists]]
 description = "Umami (website-id publico por diseno)"
 ruleIDs = ["generic-api-key"]
-regexTarget = "match"
+regexTarget = "line"
 regexes = [
   '''data-website-id''',
 ]
