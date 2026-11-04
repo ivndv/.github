@@ -1,0 +1,53 @@
+# Config central de gitleaks para todos los repos de ivndv.
+#
+# Uso en local:
+#   gitleaks git --config ~/ruta/gitleaks.toml --redact -v
+#
+# Uso en CI: el workflow reutilizable de ivndv/.github lo descarga.
+
+[extend]
+useDefault = true
+
+# ---------------------------------------------------------------------------
+# Falsos positivos conocidos y deliberados
+# ---------------------------------------------------------------------------
+
+[[allowlists]]
+description = "Claves de prueba publicas de Cloudflare Turnstile"
+regexes = [
+  '''1x00000000000000000000AA''',
+  '''2x00000000000000000000AB''',
+  '''1x0000000000000000000000000000000AA''',
+  '''2x0000000000000000000000000000000AA''',
+  '''3x0000000000000000000000000000000AA''',
+]
+
+[[allowlists]]
+description = "Placeholders de plantillas .env.example"
+regexes = [
+  '''your_[a-z0-9_]*''',
+  '''tu_[a-z0-9_]*''',
+  '''re_xxxxx''',
+  '''dev_key''',
+  '''cambia[_ ]?esto''',
+]
+
+[[allowlists]]
+description = "Ejemplos de documentacion con X-API-Key de curl"
+ruleIDs = ["curl-auth-header"]
+paths = [
+  '''(^|/)README\.md$''',
+]
+
+# ---------------------------------------------------------------------------
+# Regla extra: tokens de API de Cloudflare
+# Formato: 40 caracteres [A-Za-z0-9_-]. No lo cubre la config por defecto.
+# Se limita a asignaciones e incluye un stopword para no marcar hashes.
+# ---------------------------------------------------------------------------
+
+[[rules]]
+id = "cloudflare-api-token"
+description = "Token de API de Cloudflare"
+regex = '''(?i)cloudflare[_a-z0-9]*(?:api)?[_]?(?:token|key)\s*[=:]\s*['"]?([A-Za-z0-9_-]{40})['"]?'''
+secretGroup = 1
+keywords = ["cloudflare"]

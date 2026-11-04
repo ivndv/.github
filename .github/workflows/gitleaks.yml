@@ -1,0 +1,70 @@
+name: gitleaks
+
+# Workflow reutilizable. Se llama desde cualquier repo con:
+#
+#   jobs:
+#     gitleaks:
+#       uses: ivndv/.github/.github/workflows/gitleaks.yml@main
+#
+# Escanea solo los commits nuevos del push/PR. Para revisar todo el
+# historial de una vez, pasar full-history: true (lento).
+
+on:
+  workflow_call:
+    inputs:
+      full-history:
+        description: "Escanear todo el historial en vez de solo el rango nuevo"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: secretos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Instalar gitleaks
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz" \
+            | tar -xz -C "$HOME/.local/bin" gitleaks
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Descargar config central
+        run: curl -fsSL "https://raw.githubusercontent.com/ivndv/.github/main/gitleaks.toml" -o "$RUNNER_TEMP/gitleaks.toml"
+
+      - name: Calcular rango de commits
+        id: rango
+        run: |
+          set -eu
+          if [ "${{ inputs.full-history }}" = "true" ]; then
+            opts="--all"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            opts="origin/${{ github.base_ref }}..HEAD"
+          else
+            before="${{ github.event.before }}"
+            case "$before" in
+              0000000000000000000000000000000000000000|"")
+                opts="HEAD~1..HEAD"
+                ;;
+              *)
+                opts="$before..${{ github.sha }}"
+                ;;
+            esac
+          fi
+          echo "opts=$opts" >> "$GITHUB_OUTPUT"
+          echo "Rango: $opts"
+
+      - name: Escanear
+        run: |
+          gitleaks git "$GITHUB_WORKSPACE" \
+            --config "$RUNNER_TEMP/gitleaks.toml" \
+            --redact -v \
+            --log-opts "${{ steps.rango.outputs.opts }}"
